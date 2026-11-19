@@ -235,6 +235,19 @@ document.getElementById('cal').href = 'https://calendar.google.com/calendar/rend
 
 // RSVP — put EML's WhatsApp number here (country code + number, no + or spaces), e.g. '25884XXXXXXX'
 const RSVP_WHATSAPP = '258844765421';
+// RSVP sheet — paste the Google Apps Script web app URL here (ends in /exec). Leave empty to skip.
+const RSVP_SHEET_URL = 'https://script.google.com/macros/s/AKfycbyuhwbprlaa9p2A4u1eoTBmSlssmvGne90am28-BCoJLMjUG9IiZBpAIQFhDSkJ9KuZ/exec';
+let lastSaved = '';
+function saveToSheet(nome, contacto){
+  if (!RSVP_SHEET_URL) return;
+  const key = nome + '|' + contacto;
+  if (key === lastSaved) return; // avoid duplicate rows if the guest taps twice
+  lastSaved = key;
+  try {
+    fetch(RSVP_SHEET_URL, { method: 'POST', mode: 'no-cors', keepalive: true,
+      body: new URLSearchParams({ nome: nome, contacto: contacto }) }).catch(() => {});
+  } catch (err) {}
+}
 const rName = document.getElementById('rsvp-name'), rContact = document.getElementById('rsvp-contact');
 const rSend = document.getElementById('rsvp-send'), rMsg = document.getElementById('rsvp-msg');
 function rsvpLink(){
@@ -249,6 +262,7 @@ rSend.addEventListener('click', e => {
     (rName.value.trim() ? rContact : rName).focus(); return;
   }
   if (!RSVP_WHATSAPP) { e.preventDefault(); rMsg.textContent = 'RSVP will open shortly. Please try again later.'; return; }
+  saveToSheet(rName.value.trim(), rContact.value.trim());
   rMsg.textContent = 'Thank you, ' + rName.value.trim().split(' ')[0] + '. Press send in WhatsApp to confirm.';
 });
 document.getElementById('rsvp').addEventListener('submit', e => { e.preventDefault(); rSend.click(); });
